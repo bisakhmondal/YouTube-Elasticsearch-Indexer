@@ -32,6 +32,14 @@ type Config struct {
 
 	// http client config
 	HttpRequestTimeout int `json:"generic-http-request-timeout"`
+
+	ElasticConfig struct {
+		Endpoints []string `json:"endpoints"`
+		Username  string   `json:"username"`
+		Password  string   `json:"password"`
+
+		Index string `json:"index"`
+	} `json:"elasticsearch-config"`
 }
 
 // LoadConfig loads config from the json file specified to filePath args.

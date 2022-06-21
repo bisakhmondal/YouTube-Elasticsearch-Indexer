@@ -56,7 +56,6 @@ func main() {
 	select {
 	case s := <-sig:
 		log.Info().Str("signal", s.String()).Msg("signal received...exiting")
-		cancel()
 	case err := <-errChan:
 		log.Error().Err(err).Msg("Failed to run the server")
 	case <-ctx.Done():

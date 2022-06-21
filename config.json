@@ -14,12 +14,23 @@
 
   "base-url": "https://youtube.googleapis.com/youtube/v3/search",
   "_comment": "async data fetch interval in seconds",
-  "data-fetch-interval": 60,
+  "data-fetch-interval": 10,
+
+
   "host": "0.0.0.0",
   "port": 8880,
   "__comment": "timeouts in seconds",
   "read-timeout": 20,
   "write-timeout": 20,
   "idle-timeout": 120,
-  "generic-http-request-timeout": 25
+  "generic-http-request-timeout": 25,
+
+  "elasticsearch-config": {
+    "endpoints": [
+      "https://my-deployment-a2e221.es.asia-south1.gcp.elastic-cloud.com"
+    ],
+    "username": "elastic",
+    "password": "M88CrS772SVYUmVUntKMbpjb",
+    "index": "youtube-scraped-data"
+  }
 }

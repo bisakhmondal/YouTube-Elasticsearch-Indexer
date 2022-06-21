@@ -2,6 +2,7 @@ package server
 
 import (
 	"context"
+	"crypto/tls"
 	"net"
 	"net/http"
 	"strconv"
@@ -9,15 +10,25 @@ import (
 	"yt-indexer/keystore"
 	"yt-indexer/utils"
 
+	"github.com/elastic/go-elasticsearch/v8"
+	"github.com/rs/zerolog/log"
+
 	"github.com/gorilla/mux"
 	"github.com/pkg/errors"
 )
 
 type server struct {
-	http          *http.Server
-	config        *utils.Config
-	apiKeyStore   keystore.Store
+	// API endpoints exposed via this http server
+	http *http.Server
+	// cached config
+	config *utils.Config
+	// the API keystore
+	apiKeyStore keystore.Store
+	// keeping track of last fetch of YouTube Data API
 	lastFetchTime time.Time
+
+	// elasticsearch client
+	esc *elasticsearch.Client
 }
 
 func NewServer(conf *utils.Config) (*server, error) {
@@ -27,6 +38,11 @@ func NewServer(conf *utils.Config) (*server, error) {
 
 	router := mux.NewRouter()
 
+	getRouter := router.Methods(http.MethodGet).Subrouter()
+	getRouter.HandleFunc("/ping", func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte("pong\n"))
+	})
+
 	s.http = &http.Server{
 		Addr:         net.JoinHostPort(conf.Host, strconv.Itoa(conf.Port)),
 		Handler:      router,
@@ -34,6 +50,32 @@ func NewServer(conf *utils.Config) (*server, error) {
 		WriteTimeout: time.Duration(conf.WriteTimeout) * time.Second,
 		IdleTimeout:  time.Duration(conf.IdleTimeout) * time.Second,
 	}
+
+	// set up a client to the elasticsearch cluster
+	es, err := elasticsearch.NewClient(elasticsearch.Config{
+		Addresses: conf.ElasticConfig.Endpoints,
+		Username:  conf.ElasticConfig.Username,
+		Password:  conf.ElasticConfig.Password,
+		Transport: &http.Transport{
+			MaxIdleConnsPerHost:   10,
+			ResponseHeaderTimeout: time.Second,
+			DialContext:           (&net.Dialer{Timeout: time.Duration(conf.HttpRequestTimeout) * time.Second}).DialContext,
+			TLSClientConfig: &tls.Config{
+				MinVersion: tls.VersionTLS12,
+			},
+		},
+	})
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to initialize client to elasticsearch cluster")
+	}
+
+	// check client by querying cluster information
+	res, err := es.Info()
+	if err != nil {
+		return nil, errors.Wrap(err, "unable to query elasticsearch cluster information")
+	}
+	log.Debug().Msg(res.String())
+	s.esc = es
 
 	store, err := keystore.NewInMemoryKeyStore(conf.Keys)
 	if err != nil {
@@ -55,6 +97,7 @@ func (s *server) RunAsync(ctx context.Context) chan error {
 		for {
 			select {
 			case <-fetchEvent.C:
+				log.Debug().Msg("performing data sync with You Tube API")
 				if err := s.QueryYouTubeDataV3API(ctx); err != nil {
 					firstErr <- err
 					return
