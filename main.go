@@ -3,13 +3,15 @@ package main
 import (
 	"context"
 	"flag"
-	"github.com/rs/zerolog"
-	"github.com/rs/zerolog/log"
 	"os"
 	"os/signal"
 	"syscall"
+	"yt-indexer/leaderelection"
 	"yt-indexer/server"
 	"yt-indexer/utils"
+
+	"github.com/rs/zerolog"
+	"github.com/rs/zerolog/log"
 )
 
 var (
@@ -40,6 +42,11 @@ func main() {
 		log.Fatal().Err(err).Msg("failed to load config file")
 	}
 
+	hostname, err := os.Hostname()
+	if err != nil {
+		log.Fatal().Err(err).Msg("failed to fetch the hostname")
+	}
+
 	srv, err := server.NewServer(config)
 	if err != nil {
 		log.Fatal().Err(err).Msg("unable to create a server")
@@ -48,10 +55,19 @@ func main() {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	errChan := srv.RunAsync(ctx)
+	leaderElector, err := leaderelection.NewRaftBasedLeaderElector(ctx, config, hostname)
+	if err != nil {
+		log.Fatal().Err(err).Msg("failed to setup a leader election mechanism")
+	}
+	// elector initiates the election in asynchronous fashion
+	leaderElector.Campaign()
+
+	errChan := srv.RunAsync(ctx, leaderElector)
 
 	sig := make(chan os.Signal, 1)
 	signal.Notify(sig, syscall.SIGINT, syscall.SIGTERM)
+
+	log.Info().Str("host", config.Host).Int("port", config.Port).Msg("server is up and running")
 
 	select {
 	case s := <-sig:

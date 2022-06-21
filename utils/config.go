@@ -40,6 +40,14 @@ type Config struct {
 
 		Index string `json:"index"`
 	} `json:"elasticsearch-config"`
+
+	// etcd config for leader election
+	EtcdConfig struct {
+		Endpoints   []string `json:"endpoints"`
+		Username    string   `json:"username"`
+		Password    string   `json:"password"`
+		ElectionKey string   `json:"election-key"`
+	} `json:"etcd-config"`
 }
 
 // LoadConfig loads config from the json file specified to filePath args.

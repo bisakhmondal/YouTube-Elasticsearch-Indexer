@@ -32,5 +32,14 @@
     "username": "elastic",
     "password": "M88CrS772SVYUmVUntKMbpjb",
     "index": "youtube-scraped-data-official"
+  },
+
+  "etcd-config":{
+    "endpoints": [
+      "0.0.0.0:2379"
+    ],
+    "username": "",
+    "password": "",
+    "election-key": "/leader/election"
   }
 }

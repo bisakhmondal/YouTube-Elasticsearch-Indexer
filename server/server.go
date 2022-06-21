@@ -8,6 +8,7 @@ import (
 	"strconv"
 	"time"
 	"yt-indexer/keystore"
+	"yt-indexer/leaderelection"
 	"yt-indexer/utils"
 
 	"github.com/elastic/go-elasticsearch/v8"
@@ -94,7 +95,7 @@ func NewServer(conf *utils.Config) (*server, error) {
 	return s, nil
 }
 
-func (s *server) RunAsync(ctx context.Context) chan error {
+func (s *server) RunAsync(ctx context.Context, elector leaderelection.Elector) chan error {
 	firstErr := make(chan error, 2)
 	// run the async job
 	go func(ctx context.Context) {
@@ -102,10 +103,17 @@ func (s *server) RunAsync(ctx context.Context) chan error {
 		for {
 			select {
 			case <-fetchEvent.C:
-				log.Debug().Msg("performing data sync with You Tube API")
-				if err := s.QueryYouTubeDataV3API(ctx); err != nil {
-					firstErr <- err
-					return
+				if elector.IsLeader() {
+					log.Debug().Msg("performing data sync with You Tube API")
+					if err := s.QueryYouTubeDataV3API(ctx); err != nil {
+						firstErr <- err
+						return
+					}
+
+					// after election, resign the post. so that the async job runs as load balanced fashion
+					elector.Resign()
+					// initiate an async Leader election in the background
+					elector.Campaign()
 				}
 			case <-ctx.Done():
 				return
