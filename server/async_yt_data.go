@@ -164,9 +164,9 @@ type YouTubeDataStoreMetadata struct {
 	ThumbnailsUrl string `json:"thumbnails"`
 	ChannelTitle  string `json:"channelTitle"`
 
-	VideoId     string    `json:"videoId"`
-	PublishTime time.Time `json:"publishTime"`
-	ChannelId   string    `json:"channelId"`
+	VideoId     string `json:"videoId"`
+	PublishTime string `json:"publishTime"`
+	ChannelId   string `json:"channelId"`
 }
 
 type yTResponseFormat struct {
@@ -193,8 +193,8 @@ type yTResponseFormat struct {
 					Height int    `json:"height"`
 				} `json:"default"`
 			} `json:"thumbnails"`
-			ChannelTitle string    `json:"channelTitle"`
-			PublishTime  time.Time `json:"publishTime"`
+			ChannelTitle string `json:"channelTitle"`
+			PublishTime  string `json:"publishTime"`
 		} `json:"snippet"`
 	} `json:"items"`
 }

@@ -36,12 +36,17 @@ func NewServer(conf *utils.Config) (*server, error) {
 		config: conf,
 	}
 
+	// setting up the router
 	router := mux.NewRouter()
 
 	getRouter := router.Methods(http.MethodGet).Subrouter()
 	getRouter.HandleFunc("/ping", func(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("pong\n"))
 	})
+
+	// paginated data fetch
+	getRouter.HandleFunc("/api/v1/search/all", s.fetchAllPaginated)
+	getRouter.HandleFunc("/api/v1/search", s.matchQueryResult)
 
 	s.http = &http.Server{
 		Addr:         net.JoinHostPort(conf.Host, strconv.Itoa(conf.Port)),

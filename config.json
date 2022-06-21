@@ -7,7 +7,7 @@
   "query-string": {
     "part": "snippet",
     "maxResults": "25",
-    "q": "cricket",
+    "q": "official",
     "order": "date",
     "type": "video"
   },
@@ -31,6 +31,6 @@
     ],
     "username": "elastic",
     "password": "M88CrS772SVYUmVUntKMbpjb",
-    "index": "youtube-scraped-data"
+    "index": "youtube-scraped-data-official"
   }
 }
