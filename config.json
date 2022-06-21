@@ -1,0 +1,25 @@
+{
+  "comment_":"You Tube Data V3 API configurations",
+  "keys": [
+    "AIzaSyD47tRRa_4Hv-8fFIhS9zsj9kgTt6z-qdY"
+  ],
+
+  "query-string": {
+    "part": "snippet",
+    "maxResults": "25",
+    "q": "cricket",
+    "order": "date",
+    "type": "video"
+  },
+
+  "base-url": "https://youtube.googleapis.com/youtube/v3/search",
+  "_comment": "async data fetch interval in seconds",
+  "data-fetch-interval": 60,
+  "host": "0.0.0.0",
+  "port": 8880,
+  "__comment": "timeouts in seconds",
+  "read-timeout": 20,
+  "write-timeout": 20,
+  "idle-timeout": 120,
+  "generic-http-request-timeout": 25
+}
